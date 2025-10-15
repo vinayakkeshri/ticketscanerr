@@ -1,50 +1,56 @@
-// URL of your Apps Script backend
+// Replace with your deployed Apps Script Web App URL
 const WEB_APP_URL = "https://vinayakkeshri.github.io/ticketscanerr/";
 
-// Elements
+const video = document.getElementById("video");
 const status = document.getElementById("status");
 
-// Check for camera access and start scanner
+// Access the camera
 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
   .then(stream => {
-    const video = document.getElementById("video");
     video.srcObject = stream;
-    video.setAttribute("playsinline", true); // required to play on iOS
+    video.setAttribute("playsinline", true); // Required for iOS
     video.play();
     status.textContent = "Camera started";
 
-    // Simple QR scanning loop using HTML5 QR Code library or your own logic
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
 
-    const scan = () => {
+    const scanLoop = () => {
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Here you can use a QR scanning library like jsQR
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        // Example: const code = jsQR(imageData.data, canvas.width, canvas.height);
-        // if (code) { sendToBackend(code.data); }
+        const code = jsQR(imageData.data, canvas.width, canvas.height);
 
+        if (code) {
+          status.textContent = "QR Code detected: " + code.data;
+          sendToBackend(code.data);
+          // Optional: stop scanning after first read
+          return;
+        }
       }
-      requestAnimationFrame(scan);
+      requestAnimationFrame(scanLoop);
     };
-    scan();
 
+    scanLoop();
   })
   .catch(err => {
     status.textContent = "Error accessing camera: " + err;
     console.error(err);
   });
 
-// Function to send scanned QR code to Apps Script backend
+// Send scanned ticket ID to Apps Script
 function sendToBackend(ticketId) {
-  fetch(WEB_APP_URL + "?ticketId=" + encodeURIComponent(ticketId))
+  fetch(`${WEB_APP_URL}?ticketId=${encodeURIComponent(ticketId)}`)
     .then(response => response.json())
     .then(data => {
       alert("Ticket status: " + data.status);
+      // You can update the page or do more here
     })
-    .catch(err => console.error(err));
+    .catch(err => {
+      console.error(err);
+      alert("Error sending ticket to backend");
+    });
 }
