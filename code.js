@@ -1,5 +1,5 @@
 // Replace with your deployed Apps Script Web App URL
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwWhP7_6WxempCMva6OC-qvoGF8xiyvQ5a9eK5Va-0rTodF__PN-dEXEBJJaF5Elw-C5A/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFW-heAwWtCL1oA9xvP0l2_eH9ApWOC0xfb94IUWd4lKMM38k6naqUrIqQlwILKUI38A/exec";
 
 const video = document.getElementById("video");
 const status = document.getElementById("status");
