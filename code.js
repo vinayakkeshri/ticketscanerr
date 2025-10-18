@@ -1,16 +1,16 @@
-// Replace with your deployed Apps Script Web App URL
+// === CONFIG ===
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFW-heAwWtCL1oA9xvP0l2_eH9ApWOC0xfb94IUWd4lKMM38k6naqUrIqQlwILKUI38A/exec";
 
 const video = document.getElementById("video");
 const status = document.getElementById("status");
 
-// Access the camera
+// === CAMERA SETUP ===
 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
   .then(stream => {
     video.srcObject = stream;
-    video.setAttribute("playsinline", true); // Required for iOS
+    video.setAttribute("playsinline", true); // iOS fix
     video.play();
-    status.textContent = "Camera started";
+    status.textContent = "Camera started ✅";
 
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
@@ -25,10 +25,12 @@ navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
         const code = jsQR(imageData.data, canvas.width, canvas.height);
 
         if (code) {
-          status.textContent = "QR Code detected: " + code.data;
-          sendToBackend(code.data);
-          // Optional: stop scanning after first read
-          return;
+          const ticketId = code.data.trim();
+          status.textContent = "QR Detected: " + ticketId;
+
+          // ✅ Send both action and ticketId
+          sendToBackend(ticketId);
+          return; // stop scanning after first read
         }
       }
       requestAnimationFrame(scanLoop);
@@ -37,20 +39,33 @@ navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
     scanLoop();
   })
   .catch(err => {
-    status.textContent = "Error accessing camera: " + err;
+    status.textContent = "Error accessing camera: " + err.message;
     console.error(err);
   });
 
-// Send scanned ticket ID to Apps Script
+// === SEND TO BACKEND ===
 function sendToBackend(ticketId) {
-  fetch(`${WEB_APP_URL}?ticketId=${encodeURIComponent(ticketId)}`)
+  const url = `${WEB_APP_URL}?action=checkin&ticketId=${encodeURIComponent(ticketId)}`;
+
+  fetch(url)
     .then(response => response.json())
     .then(data => {
-      alert("Ticket status: " + data.status);
-      // You can update the page or do more here
+      console.log(data);
+
+      if (data.success && data.found) {
+        if (data.alreadyCheckedIn) {
+          alert(`⚠️ Ticket ${ticketId} was already checked in at ${data.checkinValue}`);
+        } else {
+          alert(`✅ Ticket ${ticketId} checked in successfully!`);
+        }
+      } else if (data.success && !data.found) {
+        alert(`❌ Ticket ${ticketId} not found`);
+      } else {
+        alert(`⚠️ Error: ${data.error || "Unknown error"}`);
+      }
     })
     .catch(err => {
       console.error(err);
-      alert("Error sending ticket to backend");
+      alert("❌ Network error connecting to backend");
     });
 }
