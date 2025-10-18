@@ -1,4 +1,3 @@
-Perfectly working 2 front js
 // code.js - bug fixes: invalid-ticket actions, hold/resume reliable, correct colors on confirm
 // --------------------------------------------------
 const DEBUG = true; // set to false in production
