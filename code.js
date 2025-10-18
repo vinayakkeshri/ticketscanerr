@@ -17,7 +17,6 @@ const rcHint = document.getElementById("rcHint");
 const cardActions = document.getElementById("cardActions");
 const confirmBtn = document.getElementById("confirmBtn");
 const holdBtn = document.getElementById("holdBtn");
-const closeBtn = document.getElementById("closeBtn");
 const scanAgainBtn = document.getElementById("scanAgainBtn");
 
 let scanning = false;
@@ -325,11 +324,7 @@ async function performLookup(rawScanned) {
     }, 200); // small delay to ensure camera resources free
   };
 
-  closeBtn.onclick = () => {
-    hideCard();
-    scanAgainBtn.style.display = "block";
-    awaitingConfirmation = false;
-  };
+  
 }
 
 async function performCheckin(ticketId) {
