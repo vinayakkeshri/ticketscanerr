@@ -1,71 +1,96 @@
 // === CONFIG ===
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFW-heAwWtCL1oA9xvP0l2_eH9ApWOC0xfb94IUWd4lKMM38k6naqUrIqQlwILKUI38A/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzMbx_xQddMKF1BIAD68IPObqw6GcSZjabFRIVNghiEsGxl9c0BkKAphAE0mrxprC2yEw/exec";
 
 const video = document.getElementById("video");
 const status = document.getElementById("status");
+const resultBox = document.getElementById("result");
+const message = document.getElementById("message");
+const ticketInfo = document.getElementById("ticket-info");
+const scanAgainBtn = document.getElementById("scan-again");
+
+let scanning = true;
 
 // === CAMERA SETUP ===
 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
   .then(stream => {
     video.srcObject = stream;
-    video.setAttribute("playsinline", true); // iOS fix
-    video.play();
     status.textContent = "Camera started ✅";
-
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-
-    const scanLoop = () => {
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, canvas.width, canvas.height);
-
-        if (code) {
-          const ticketId = code.data.trim();
-          status.textContent = "QR Detected: " + ticketId;
-
-          // ✅ Send both action and ticketId
-          sendToBackend(ticketId);
-          return; // stop scanning after first read
-        }
-      }
-      requestAnimationFrame(scanLoop);
-    };
-
-    scanLoop();
+    startScanning();
   })
   .catch(err => {
-    status.textContent = "Error accessing camera: " + err.message;
-    console.error(err);
+    status.textContent = "⚠️ Error accessing camera: " + err.message;
   });
+
+// === SCANNING LOOP ===
+function startScanning() {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  const loop = () => {
+    if (!scanning) return;
+
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+      if (code) {
+        scanning = false;
+        const ticketId = code.data.trim();
+        showMessage("🔍 QR Detected", "Checking ticket...", "warning");
+        sendToBackend(ticketId);
+        return;
+      }
+    }
+    requestAnimationFrame(loop);
+  };
+  loop();
+}
 
 // === SEND TO BACKEND ===
 function sendToBackend(ticketId) {
-  const url = `${WEB_APP_URL}?action=checkin&ticketId=${encodeURIComponent(ticketId)}`;
-
-  fetch(url)
-    .then(response => response.json())
+  fetch(`${WEB_APP_URL}?action=checkin&ticketId=${encodeURIComponent(ticketId)}`)
+    .then(res => res.json())
     .then(data => {
-      console.log(data);
-
-      if (data.success && data.found) {
-        if (data.alreadyCheckedIn) {
-          alert(`⚠️ Ticket ${ticketId} was already checked in at ${data.checkinValue}`);
-        } else {
-          alert(`✅ Ticket ${ticketId} checked in successfully!`);
-        }
-      } else if (data.success && !data.found) {
-        alert(`❌ Ticket ${ticketId} not found`);
-      } else {
-        alert(`⚠️ Error: ${data.error || "Unknown error"}`);
+      console.log("Response:", data);
+      if (!data.success) {
+        showMessage("❌ Error", data.error || "Unknown error", "error");
+        return;
       }
+
+      if (!data.found) {
+        showMessage("❌ Invalid Ticket", `Ticket ID ${ticketId} not found.`, "error");
+      } else if (data.alreadyCheckedIn) {
+        showMessage("⚠️ Already Checked In", `Ticket ID ${ticketId}\nChecked in at ${data.checkinValue}`, "warning");
+      } else {
+        showMessage("✅ Success", `Ticket ID ${ticketId} checked in successfully!`, "success");
+        navigator.vibrate?.(200);
+      }
+
+      scanAgainBtn.style.display = "block";
     })
     .catch(err => {
       console.error(err);
-      alert("❌ Network error connecting to backend");
+      showMessage("❌ Network Error", "Unable to reach backend", "error");
+      scanAgainBtn.style.display = "block";
     });
 }
+
+// === UI HELPERS ===
+function showMessage(title, info, type) {
+  message.textContent = title;
+  ticketInfo.textContent = info;
+  resultBox.className = `result-box ${type}`;
+  resultBox.style.display = "block";
+}
+
+scanAgainBtn.addEventListener("click", () => {
+  scanning = true;
+  resultBox.style.display = "none";
+  scanAgainBtn.style.display = "none";
+  status.textContent = "Scanning for next QR...";
+  startScanning();
+});
