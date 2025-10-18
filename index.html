@@ -1,107 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Event QR Check-In</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <style>
     body {
-      margin: 0;
-      font-family: "Poppins", sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      background: linear-gradient(135deg, #1c1f2b, #2d3349);
+      background-color: #121826;
       color: white;
-      height: 100vh;
+      font-family: 'Poppins', sans-serif;
       text-align: center;
-      padding: 20px;
+      margin: 0;
+      padding: 0;
     }
-
     h1 {
       margin-top: 20px;
-      font-size: 1.6em;
-      letter-spacing: 0.5px;
+      color: #00bcd4;
+      font-size: 1.8em;
     }
-
     video {
-      margin-top: 20px;
-      width: 90%;
-      max-width: 350px;
-      border-radius: 16px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-      background: black;
-    }
-
-    #status {
-      margin-top: 15px;
-      font-weight: 500;
-      font-size: 1.1em;
-    }
-
-    .result-box {
-      margin-top: 25px;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 15px 20px;
-      border-radius: 12px;
       width: 90%;
       max-width: 360px;
-      text-align: left;
-      display: none;
-      animation: fadeIn 0.3s ease-in-out;
-    }
-
-    .result-box.success { border-left: 5px solid #00ff99; }
-    .result-box.error { border-left: 5px solid #ff4f4f; }
-    .result-box.warning { border-left: 5px solid #ffc107; }
-
-    #ticket-info {
-      margin-top: 8px;
-      font-size: 0.95em;
-      color: #ddd;
-    }
-
-    button {
+      border-radius: 16px;
       margin-top: 20px;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 10px;
-      font-size: 1em;
-      font-weight: 600;
-      cursor: pointer;
-      background: #00bfa6;
+      border: 2px solid #1f2937;
+    }
+    #status {
+      margin-top: 12px;
+      font-size: 1.1em;
+      color: #9ca3af;
+    }
+    #resultCard {
+      margin: 20px auto;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 12px;
+      padding: 15px;
+      background: #1f2937;
+      display: none;
+    }
+    #resultCard.success {
+      border-left: 6px solid #4ade80;
+    }
+    #resultCard.warning {
+      border-left: 6px solid #facc15;
+    }
+    #resultCard.error {
+      border-left: 6px solid #ef4444;
+    }
+    #resultTitle {
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    #resultMessage {
+      margin-top: 8px;
+      white-space: pre-line;
+    }
+    #scanAgainBtn {
+      display: none;
+      background: #00bcd4;
       color: white;
-      transition: 0.2s;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      margin-top: 15px;
+      cursor: pointer;
+      font-weight: 500;
     }
-
-    button:hover {
-      background: #00d4b2;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    #scanAgainBtn:hover {
+      background: #0891b2;
     }
   </style>
 </head>
-
 <body>
-  <h1>🎟️ Event QR Check-In</h1>
-  <video id="video" autoplay playsinline></video>
-  <p id="status">Initializing camera...</p>
 
-  <div id="result" class="result-box">
-    <div id="message"></div>
-    <div id="ticket-info"></div>
+  <h1>🎟️ Event QR Check-In</h1>
+  <video id="video" autoplay></video>
+  <p id="status">Starting camera...</p>
+
+  <div id="resultCard">
+    <div id="resultTitle"></div>
+    <div id="resultMessage"></div>
   </div>
 
-  <button id="scan-again" style="display:none;">Scan Next Ticket</button>
+  <button id="scanAgainBtn">Scan Next Ticket</button>
 
   <!-- jsQR Library -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-  <!-- Custom JS -->
+  <!-- Your custom script -->
   <script src="code.js"></script>
 </body>
 </html>
