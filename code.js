@@ -1,67 +1,76 @@
-// === CONFIG ===
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzMbx_xQddMKF1BIAD68IPObqw6GcSZjabFRIVNghiEsGxl9c0BkKAphAE0mrxprC2yEw/exec";
+// Replace with your actual deployed Google Apps Script web app URL
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFW-heAwWtCL1oA9xvP0l2_eH9ApWOC0xfb94IUWd4lKMM38k6naqUrIqQlwILKUI38A/exec";
 
 const video = document.getElementById("video");
-const status = document.getElementById("status");
-const resultBox = document.getElementById("result");
-const message = document.getElementById("message");
-const ticketInfo = document.getElementById("ticket-info");
-const scanAgainBtn = document.getElementById("scan-again");
+const statusEl = document.getElementById("status");
+const resultCard = document.getElementById("resultCard");
+const resultTitle = document.getElementById("resultTitle");
+const resultMessage = document.getElementById("resultMessage");
+const scanAgainBtn = document.getElementById("scanAgainBtn");
 
-let scanning = true;
+let scanning = false;
 
-// === CAMERA SETUP ===
+// === Start Camera ===
 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
   .then(stream => {
     video.srcObject = stream;
-    status.textContent = "Camera started ✅";
-    startScanning();
+    video.setAttribute("playsinline", true);
+    video.play();
+    statusEl.textContent = "Camera ready - scanning...";
+    startScanner();
   })
   .catch(err => {
-    status.textContent = "⚠️ Error accessing camera: " + err.message;
+    statusEl.textContent = "Camera access denied: " + err.message;
+    console.error(err);
   });
 
-// === SCANNING LOOP ===
-function startScanning() {
+// === Scanner Loop ===
+function startScanner() {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
 
-  const loop = () => {
+  scanning = true;
+  function scanFrame() {
     if (!scanning) return;
 
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       const code = jsQR(imageData.data, canvas.width, canvas.height);
 
       if (code) {
         scanning = false;
-        const ticketId = code.data.trim();
-        showMessage("🔍 QR Detected", "Checking ticket...", "warning");
-        sendToBackend(ticketId);
+        statusEl.textContent = "QR detected!";
+        sendToBackend(code.data);
         return;
       }
     }
-    requestAnimationFrame(loop);
-  };
-  loop();
+    requestAnimationFrame(scanFrame);
+  }
+  scanFrame();
 }
 
-// === SEND TO BACKEND ===
+// === Backend Communication ===
 function sendToBackend(ticketId) {
-  fetch(`${WEB_APP_URL}?action=checkin&ticketId=${encodeURIComponent(ticketId)}`)
+  ticketId = ticketId?.trim();
+  if (!ticketId) {
+    showMessage("❌ Error", "Invalid or empty QR code", "error");
+    scanAgainBtn.style.display = "block";
+    return;
+  }
+
+  const url = `${WEB_APP_URL}?action=checkin&ticketId=${encodeURIComponent(ticketId)}`;
+
+  fetch(url)
     .then(res => res.json())
     .then(data => {
       console.log("Response:", data);
+
       if (!data.success) {
         showMessage("❌ Error", data.error || "Unknown error", "error");
-        return;
-      }
-
-      if (!data.found) {
+      } else if (!data.found) {
         showMessage("❌ Invalid Ticket", `Ticket ID ${ticketId} not found.`, "error");
       } else if (data.alreadyCheckedIn) {
         showMessage("⚠️ Already Checked In", `Ticket ID ${ticketId}\nChecked in at ${data.checkinValue}`, "warning");
@@ -70,7 +79,7 @@ function sendToBackend(ticketId) {
         navigator.vibrate?.(200);
       }
 
-      scanAgainBtn.style.display = "block";
+      scanAgainBtn.style.display = "block"; // always visible after result
     })
     .catch(err => {
       console.error(err);
@@ -79,18 +88,20 @@ function sendToBackend(ticketId) {
     });
 }
 
-// === UI HELPERS ===
-function showMessage(title, info, type) {
-  message.textContent = title;
-  ticketInfo.textContent = info;
-  resultBox.className = `result-box ${type}`;
-  resultBox.style.display = "block";
+// === Display Results ===
+function showMessage(title, message, type) {
+  resultCard.style.display = "block";
+  resultCard.className = "";
+  resultCard.classList.add(type);
+  resultTitle.textContent = title;
+  resultMessage.textContent = message;
 }
 
+// === Scan Again ===
 scanAgainBtn.addEventListener("click", () => {
-  scanning = true;
-  resultBox.style.display = "none";
+  resultCard.style.display = "none";
   scanAgainBtn.style.display = "none";
-  status.textContent = "Scanning for next QR...";
-  startScanning();
+  statusEl.textContent = "Scanning for next QR...";
+  scanning = true;
+  startScanner();
 });
