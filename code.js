@@ -1,5 +1,5 @@
 // Replace with your actual deployed Google Apps Script web app URL
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwFW-heAwWtCL1oA9xvP0l2_eH9ApWOC0xfb94IUWd4lKMM38k6naqUrIqQlwILKUI38A/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyZoc_bDU-0zKOpdohvPWvYdditBTh8gj7MpNOdAyWEnKc4IdwHQaRim6oVPl6pXRh2Gw/exec";
 
 const video = document.getElementById("video");
 const statusEl = document.getElementById("status");
@@ -54,7 +54,7 @@ function startScanner() {
 
 // === Backend Communication ===
 function sendToBackend(ticketId) {
-  ticketId = ticketId?.trim();
+  ticketId = ticketId?.trim().replace(/\r?\n|\r/g, "").toLowerCase();
   if (!ticketId) {
     showMessage("❌ Error", "Invalid or empty QR code", "error");
     scanAgainBtn.style.display = "block";
