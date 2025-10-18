@@ -5,7 +5,7 @@
 
 const DEBUG = true; // set false in production
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyZoc_bDU-0zKOpdohvPWvYdditBTh8gj7MpNOdAyWEnKc4IdwHQaRim6oVPl6pXRh2Gw/exec"; // <-- replace this
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby7vwRqtpGdBhI489m4Lss1x20b6NganY13Ir7FyrcLIgkesH9-16qrIXf7kNpvf47E0g/exec"; // <-- replace this
 
 // DOM
 const video = document.getElementById("video");
