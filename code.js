@@ -1,4 +1,4 @@
-// code.js - updated to show name first, then allow Hold or Confirm Check-In.
+// code.js - bug fixes: invalid-ticket actions, hold/resume reliable, correct colors on confirm
 // --------------------------------------------------
 const DEBUG = true; // set to false in production
 
@@ -45,21 +45,56 @@ function beepShort() {
   } catch (e) { /* ignore audio errors */ }
 }
 
-function showMessageCard(title, ticketId, name, alreadyCheckedIn=false, checkinValue="", hint="") {
-  resultCard.style.display = "block";
-  resultCard.className = ""; // reset classes
-  if (alreadyCheckedIn) resultCard.classList.add("warning");
-  else resultCard.classList.add("success");
+/*
+ showMessageCard:
+  - title
+  - ticketId
+  - name
+  - opts: {
+      allowActions: bool (default true) -> whether Confirm/Hold should be shown
+      isChecked: bool (default false) -> whether ticket is currently checked (either previously or just now)
+      wasAlreadyChecked: bool (default false) -> whether it was checked before scanning (if true shows yellow)
+      checkinValue: string
+      hint: string
+    }
+*/
+function showMessageCard(title, ticketId, name, opts = {}) {
+  const {
+    allowActions = true,
+    isChecked = false,
+    wasAlreadyChecked = false,
+    checkinValue = "",
+    hint = ""
+  } = opts;
 
+  resultCard.style.display = "block";
+  resultCard.className = ""; // reset
+
+  // decide class:
+  if (!allowActions && !isChecked && !wasAlreadyChecked) {
+    // error / not found
+    resultCard.classList.add("error");
+  } else if (isChecked && !wasAlreadyChecked) {
+    // just checked in -> success (green)
+    resultCard.classList.add("success");
+  } else if (wasAlreadyChecked) {
+    // previously checked -> warning (yellow)
+    resultCard.classList.add("warning");
+  } else {
+    // default verify state -> neutral success look
+    resultCard.classList.add("success");
+  }
+
+  // fill content
   resultTitle.textContent = title || "";
   rcTicket.textContent = ticketId || "";
   rcName.textContent = name || "(no name)";
-  rcCheckinRow.style.display = alreadyCheckedIn ? "block" : "none";
+  rcCheckinRow.style.display = isChecked || wasAlreadyChecked ? "block" : "none";
   rcCheckin.textContent = checkinValue || "";
   rcHint.textContent = hint || "";
 
-  // actions: if not checked in -> show Confirm + Hold
-  if (!alreadyCheckedIn) {
+  // actions: show only if allowActions AND ticket is not already checked
+  if (allowActions && !wasAlreadyChecked && !isChecked) {
     cardActions.style.display = "flex";
     confirmBtn.style.display = "inline-block";
     holdBtn.style.display = "inline-block";
@@ -74,26 +109,39 @@ function hideCard() {
   awaitingConfirmation = false;
 }
 
-async function startCameraAndScan() {
+// stop scanner loop + media stream safely
+function stopScannerAndStream() {
+  scanning = false;
   try {
-    statusEl.textContent = "Requesting camera permission...";
-    // stop previous
     if (mediaStream) {
       mediaStream.getTracks().forEach(t => t.stop());
       mediaStream = null;
     }
+  } catch (e) { log("stop stream error:", e); }
+}
 
+async function startCameraAndScan() {
+  try {
+    statusEl.textContent = "Requesting camera permission...";
+    // ensure any previous stream/loop is stopped first
+    stopScannerAndStream();
+
+    // request environment camera
     mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+
     video.srcObject = mediaStream;
     video.setAttribute("playsinline", true);
     await video.play();
 
     statusEl.textContent = "Camera started — scanning...";
+    // reset flags
+    lastScannedRaw = "";
+    awaitingConfirmation = false;
     startScannerLoop();
   } catch (err) {
     console.error("Camera start error:", err);
     statusEl.textContent = "Camera error: " + (err.message || err);
-    showMessageCard("❌ Camera Error", "", "", false, "", "Please allow camera access or try a different browser/device.");
+    showMessageCard("❌ Camera Error", "", "", { allowActions: false, hint: "Please allow camera access or try a different browser/device." });
     scanAgainBtn.style.display = "block";
   }
 }
@@ -101,6 +149,13 @@ async function startCameraAndScan() {
 function startScannerLoop() {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
+
+  // ensure only one loop runs
+  if (scanning) {
+    log("Scanner loop already running — restarting loop.");
+    // let existing loop finish. Set scanning false to force restart below.
+    scanning = false;
+  }
   scanning = true;
 
   function frame() {
@@ -132,19 +187,19 @@ function startScannerLoop() {
         }
         lastScannedRaw = raw;
         log("Detected QR:", raw);
-        // beep and vibrate to notify scanning
         beepShort();
         try { navigator.vibrate && navigator.vibrate(100); } catch (e) {}
 
         // pause scanning and lookup
         awaitingConfirmation = true;
         statusEl.textContent = "QR detected — looking up...";
-        // stop camera tracks optionally so mobile frees camera while verification happens (we'll release but keep video showing)
+
+        // stop camera tracks to free permission while guard verifies (optional)
         try { mediaStream && mediaStream.getTracks().forEach(t => t.stop()); } catch (e) { log("stop tracks error:", e); }
 
         performLookup(raw).catch(err => {
           console.error("Lookup unexpected error:", err);
-          showMessageCard("❌ Lookup Error", raw, "", false, "", String(err));
+          showMessageCard("❌ Lookup Error", raw, "", { allowActions: false, hint: String(err) });
           scanAgainBtn.style.display = "block";
           awaitingConfirmation = false;
         });
@@ -162,7 +217,7 @@ async function performLookup(rawScanned) {
   const raw = String(rawScanned || "");
   const ticketId = raw.replace(/\r?\n|\r/g, "").trim().toLowerCase();
   if (!ticketId) {
-    showMessageCard("❌ Invalid QR", "", "", false, "", "Scanned QR contained no usable ID.");
+    showMessageCard("❌ Invalid QR", "", "", { allowActions: false, hint: "Scanned QR contained no usable ID." });
     scanAgainBtn.style.display = "block";
     awaitingConfirmation = false;
     return;
@@ -175,7 +230,7 @@ async function performLookup(rawScanned) {
     resp = await fetch(url, { method: "GET", cache: "no-store" });
   } catch (err) {
     log("Network error during lookup:", err);
-    showMessageCard("❌ Network Error", ticketId, "", false, "", "Network error. Try again.");
+    showMessageCard("❌ Network Error", ticketId, "", { allowActions: false, hint: "Network error. Try again." });
     scanAgainBtn.style.display = "block";
     awaitingConfirmation = false;
     return;
@@ -184,7 +239,7 @@ async function performLookup(rawScanned) {
   if (!resp.ok) {
     const txt = await resp.text().catch(() => "");
     log("Lookup bad response:", resp.status, txt);
-    showMessageCard("❌ Server Error", ticketId, "", false, "", `Server returned ${resp.status}`);
+    showMessageCard("❌ Server Error", ticketId, "", { allowActions: false, hint: `Server returned ${resp.status}` });
     scanAgainBtn.style.display = "block";
     awaitingConfirmation = false;
     return;
@@ -194,7 +249,7 @@ async function performLookup(rawScanned) {
   try { data = await resp.json(); } catch (err) {
     const txt = await resp.text().catch(() => "");
     log("Lookup JSON parse error:", err, txt);
-    showMessageCard("❌ Bad Response", ticketId, "", false, "", "Server returned invalid JSON");
+    showMessageCard("❌ Bad Response", ticketId, "", { allowActions: false, hint: "Server returned invalid JSON" });
     scanAgainBtn.style.display = "block";
     awaitingConfirmation = false;
     return;
@@ -202,15 +257,15 @@ async function performLookup(rawScanned) {
 
   log("Lookup JSON:", data);
   if (!data || typeof data !== "object" || !data.success) {
-    showMessageCard("❌ Server Error", ticketId, "", false, "", data && data.error ? data.error : "Unknown server error");
+    showMessageCard("❌ Server Error", ticketId, "", { allowActions: false, hint: data && data.error ? data.error : "Unknown server error" });
     scanAgainBtn.style.display = "block";
     awaitingConfirmation = false;
     return;
   }
 
-  // if not found
+  // if not found: show error and NO actions
   if (!data.found) {
-    showMessageCard("❌ Ticket Not Found", ticketId, "", false, "", "Ticket not found in database. Hold or contact admin.");
+    showMessageCard("❌ Ticket Not Found", ticketId, "", { allowActions: false, hint: "Ticket not found in database. Hold or contact admin." });
     scanAgainBtn.style.display = "block";
     awaitingConfirmation = false;
     return;
@@ -222,28 +277,32 @@ async function performLookup(rawScanned) {
   const checkinValue = data.checkinValue || "";
 
   if (alreadyCheckedIn) {
-    showMessageCard("⚠️ Already Checked In", ticketId, attendeeName, true, checkinValue, "This ticket was already checked in. Do not re-check unless instructed.");
-    // keep awaitingConfirmation false so we can restart scanning after the guard presses Scan Next or Close
+    // previously checked -> show yellow, no actions
+    showMessageCard("⚠️ Already Checked In", ticketId, attendeeName, { allowActions: false, isChecked: true, wasAlreadyChecked: true, checkinValue: checkinValue, hint: "This ticket was already checked in. Do not re-check unless instructed." });
     scanAgainBtn.style.display = "block";
     awaitingConfirmation = false;
     return;
   }
 
   // not checked in: show Confirm / Hold
-  showMessageCard("🔎 Verify Attendee", ticketId, attendeeName, false, "", "If name matches, press Confirm Check-In. Otherwise press Hold.");
-  // wire confirm/hold handlers
+  showMessageCard("🔎 Verify Attendee", ticketId, attendeeName, { allowActions: true, isChecked: false, wasAlreadyChecked: false, checkinValue: "", hint: "If name matches, press Confirm Check-In. Otherwise press Hold." });
+
+  // wire confirm/hold handlers (re-assign to avoid duplicates)
   confirmBtn.onclick = async () => {
-    // small UI
     confirmBtn.disabled = true;
     confirmBtn.textContent = "Checking in...";
+    // keep UI showing attendee while checking-in
     try {
-      await performCheckin(ticketId);
+      // Do check-in network call
+      const result = await performCheckin(ticketId);
+      // result contains backend response JSON if successful
+      // show success (green) and checkin timestamp
+      showMessageCard("✅ Checked In", ticketId, result.name || attendeeName, { allowActions: false, isChecked: true, wasAlreadyChecked: false, checkinValue: result.checkinValue || "", hint: "Check-in successful." });
       resultCard.classList.add("pulse");
-      rcHint.textContent = "Checked in successfully.";
-      try { navigator.vibrate && navigator.vibrate([60,40,60]); } catch(e){}
+      try { navigator.vibrate && navigator.vibrate([60, 40, 60]); } catch (e) {}
     } catch (err) {
       console.error("performCheckin error:", err);
-      rcHint.textContent = "Check-in failed: " + String(err);
+      showMessageCard("❌ Check-in Failed", ticketId, attendeeName, { allowActions: false, isChecked: false, wasAlreadyChecked: false, checkinValue: "", hint: String(err) });
     } finally {
       confirmBtn.disabled = false;
       confirmBtn.textContent = "✅ Confirm Check-In";
@@ -255,13 +314,15 @@ async function performLookup(rawScanned) {
   holdBtn.onclick = () => {
     // close popup and resume scanning (do not check-in)
     hideCard();
-    // restart camera
     scanAgainBtn.style.display = "none";
     statusEl.textContent = "Resuming camera...";
+    // reset flags and restart camera properly
+    lastScannedRaw = ""; // allow same ticket again
+    awaitingConfirmation = false;
+    stopScannerAndStream();
     setTimeout(() => {
       startCameraAndScan();
-    }, 150);
-    awaitingConfirmation = false;
+    }, 200); // small delay to ensure camera resources free
   };
 
   closeBtn.onclick = () => {
@@ -287,17 +348,11 @@ async function performCheckin(ticketId) {
   log("Checkin response:", data);
   if (!data.success) throw new Error(data.error || "Unknown server error");
   if (!data.found) throw new Error("Ticket not found during check-in (race condition?)");
-  if (data.alreadyCheckedIn) {
-    // show the checkin time
-    showMessageCard("⚠️ Already Checked In", ticketId, data.name || "(no name)", true, data.checkinValue || "", "Ticket was already checked in.");
-    return;
-  }
-  // success
-  showMessageCard("✅ Checked In", ticketId, data.name || "(no name)", true, data.checkinValue || "", "Check-in successful.");
-  return;
+  // return object used by caller
+  return data;
 }
 
-// scan again handler: visible after each check
+// scan again handler: visible after each check or error
 scanAgainBtn.addEventListener("click", async () => {
   hideCard();
   scanAgainBtn.style.display = "none";
@@ -309,7 +364,7 @@ scanAgainBtn.addEventListener("click", async () => {
 // Auto-start when supported
 if (!("mediaDevices" in navigator) || !navigator.mediaDevices.getUserMedia) {
   statusEl.textContent = "No camera API available in this browser.";
-  showMessageCard("❌ Unsupported", "", "", false, "", "Your browser does not support camera access (getUserMedia). Try Chrome/Firefox on mobile/desktop.");
+  showMessageCard("❌ Unsupported", "", "", { allowActions: false, hint: "Your browser does not support camera access (getUserMedia). Try Chrome/Firefox on mobile/desktop." });
   scanAgainBtn.style.display = "block";
 } else {
   setTimeout(() => { startCameraAndScan(); }, 100);
