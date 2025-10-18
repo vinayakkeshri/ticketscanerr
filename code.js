@@ -94,13 +94,15 @@ function showMessageCard(title, ticketId, name, opts = {}) {
   rcHint.textContent = hint || "";
 
   // actions: show only if allowActions AND ticket is not already checked
-  if (allowActions && !wasAlreadyChecked && !isChecked) {
-    cardActions.style.display = "flex";
-    confirmBtn.style.display = "inline-block";
-    holdBtn.style.display = "inline-block";
-  } else {
-    cardActions.style.display = "none";
-  }
+if (allowActions && !wasAlreadyChecked && !isChecked) {
+  cardActions.style.display = "flex";
+  confirmBtn.style.display = "inline-block";
+  holdBtn.style.display = "inline-block";
+  closeBtn.style.display = "inline-block"; // show Close only during verify
+} else {
+  cardActions.style.display = "none";
+  closeBtn.style.display = "none"; // hide Close in all other cases
+}
 }
 
 function hideCard() {
