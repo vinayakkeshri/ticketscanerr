@@ -1,3 +1,4 @@
+Perfectly working 2 front js
 // code.js - bug fixes: invalid-ticket actions, hold/resume reliable, correct colors on confirm
 // --------------------------------------------------
 const DEBUG = true; // set to false in production
@@ -94,15 +95,13 @@ function showMessageCard(title, ticketId, name, opts = {}) {
   rcHint.textContent = hint || "";
 
   // actions: show only if allowActions AND ticket is not already checked
-if (allowActions && !wasAlreadyChecked && !isChecked) {
-  cardActions.style.display = "flex";
-  confirmBtn.style.display = "inline-block";
-  holdBtn.style.display = "inline-block";
-  closeBtn.style.display = "inline-block"; // show Close only during verify
-} else {
-  cardActions.style.display = "none";
-  closeBtn.style.display = "none"; // hide Close in all other cases
-}
+  if (allowActions && !wasAlreadyChecked && !isChecked) {
+    cardActions.style.display = "flex";
+    confirmBtn.style.display = "inline-block";
+    holdBtn.style.display = "inline-block";
+  } else {
+    cardActions.style.display = "none";
+  }
 }
 
 function hideCard() {
