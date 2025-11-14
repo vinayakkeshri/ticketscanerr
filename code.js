@@ -1,7 +1,7 @@
 // code.js - cleaned version (no closeBtn), fully working and stable
 // --------------------------------------------------
 const DEBUG = true; // set to false in production
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxvU5rVyxh4TqSATUBDcEfhIyoDODFCEmb8iQwYGj7CsqoLcWhf1BSfbIJuk691a8jQSA/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPsGus1r56o49QeIbpx0fYnNZalZTdHlba1bCyyU8k26vBnOXmzXEbEWklWuhdWlrS/exec";
 
 const video = document.getElementById("video");
 const statusEl = document.getElementById("status");
