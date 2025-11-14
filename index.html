@@ -2,150 +2,177 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Event QR Check-In — Improved UI</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>White Penguin — Event Check-In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#0f1724; --card:#111827; --muted:#9ca3af; --accent:#00bcd4; --success:#10b981; --warning:#f59e0b; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
+      --bg:#0b1020;          /* deep navy */
+      --panel:#0f1724;       /* dark card */
+      --glass: rgba(255,255,255,0.04);
+      --muted:#9aa4b2;
+      --accent1: #7c3aed;    /* violet */
+      --accent2: #06b6d4;    /* cyan */
+      --success:#16a34a;
+      --danger:#ef4444;
+      --radius:14px;
     }
     *{box-sizing:border-box}
-    body{background:var(--bg); color:#e6eef2; font-family:'Poppins',system-ui, sans-serif; margin:0;}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background: linear-gradient(180deg,var(--bg) 0%, #071024 100%);
+      color:#e6eef2;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
 
-    /* Top bar */
-    .topbar{height:64px; display:flex; align-items:center; gap:12px; padding:0 16px;}
-    .hambutton{width:44px;height:44px;border-radius:10px;background:var(--card);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer}
-    .hambutton .bar{width:20px;height:2px;background:var(--muted);margin:3px 0;border-radius:2px}
-    .title{font-weight:700;color:var(--accent);font-size:1.1rem}
+    /* top bar */
+    .topbar{
+      display:flex; align-items:center; gap:12px;
+      padding:14px 18px;
+      border-bottom:1px solid rgba(255,255,255,0.03);
+      position:sticky; top:0; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+      z-index:40;
+    }
+    .hamb{width:46px;height:46px;border-radius:12px;background:var(--panel);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
+    .hamb .bar{width:20px;height:2px;background:var(--muted);margin:3px 0;border-radius:2px}
+    .brand{font-weight:700;color:linear-gradient(90deg,var(--accent1),var(--accent2));font-size:1rem}
+    .title{margin-left:8px;font-weight:700;color:var(--accent2);font-size:1.05rem}
+    .top-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
 
     /* layout */
-    .layout{display:flex; gap:16px;padding:12px;}
-    .left, .right{flex:1}
-    .left{max-width:520px}
-    .card{background:var(--card);border-radius:12px;padding:14px}
+    .main{display:grid;grid-template-columns: 1fr 380px;gap:18px;padding:18px;align-items:start}
+    @media (max-width:1000px){ .main{grid-template-columns:1fr;} .sidebar{position:static;width:auto} }
 
-    /* video */
-    video{width:100%;max-width:480px;border-radius:14px;border:2px solid rgba(255,255,255,0.04)}
-    #status{margin-top:8px;color:var(--muted)}
+    /* left panel */
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:var(--radius);padding:18px;box-shadow: 0 8px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.02)}
+    .video-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+    video{width:100%;max-width:720px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);background:#000}
+    #status{color:var(--muted);font-size:0.95rem}
 
     /* result card */
-    #resultCard{margin-top:12px}
-    #resultTitle{font-weight:700;color:#e6eef2}
-    .row{margin:8px 0}
-    .muted{color:var(--muted)}
-    .card-actions{display:flex;gap:10px;margin-top:12px}
-    .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
-    .btn-confirm{background:var(--success);color:#04270b}
-    .btn-hold{background:var(--warning);color:#2b1600}
-    .btn-close{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04)}
+    .result{margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent);border:1px solid rgba(255,255,255,0.02)}
+    .result h3{margin:0 0 8px 0}
+    .row{display:flex;gap:8px;align-items:center}
+    .muted{color:var(--muted);font-size:0.95rem}
 
-    /* scan again */
-    #scanAgainBtn{display:none;margin-top:12px;background:var(--accent);color:#04262b;border:none;padding:10px 14px;border-radius:10px;cursor:pointer}
+    .actions{display:flex;gap:10px;margin-top:12px}
+    .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+    .btn-primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#021220}
+    .btn-success{background:var(--success);color:#05220f}
+    .btn-warning{background:#f59e0b;color:#2b1600}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    .small{padding:7px 10px;font-size:0.95rem}
 
     /* manual input */
-    .manual{margin-top:12px;display:flex;gap:8px}
-    .manual input{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:#e6eef2}
-    .manual button{padding:10px 12px;border-radius:10px;border:none;background:var(--accent);color:#021215;cursor:pointer}
+    .manual{display:flex;gap:8px;margin-top:12px}
+    .manual input{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
 
-    /* sidebar */
-    .sidebar{position:fixed;left:-360px;top:0;height:100%;width:360px;background:linear-gradient(180deg,var(--card),#0b1220);box-shadow:8px 0 30px rgba(0,0,0,0.6);padding:18px;transition:left .28s ease;border-right:1px solid rgba(255,255,255,0.02);z-index:60}
-    .sidebar.open{left:0}
-    .sidebar h3{margin-top:6px;color:var(--accent)}
-    .stats{display:flex;gap:8px;margin:12px 0}
-    .stat{flex:1;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;text-align:center}
-    .stat .num{font-weight:700;font-size:1.2rem}
-    .guest-list{margin-top:12px;max-height:55vh;overflow:auto}
-    .guest{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;margin-bottom:8px;background:rgba(255,255,255,0.015)}
-    .guest .meta{display:flex;flex-direction:column;align-items:flex-start}
-    .call-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 8px;border-radius:8px;cursor:pointer;color:var(--muted)}
-    .call-btn.disabled{opacity:0.4;cursor:not-allowed}
+    /* scan button */
+    #scanAgainBtn{display:none;margin-top:12px;padding:10px 14px;border-radius:10px;border:none;background:var(--accent2);color:#001e22;cursor:pointer}
 
-    /* responsive */
-    @media (max-width:900px){.layout{flex-direction:column;padding:12px}.left,.right{max-width:100%}}
+    /* right sidebar */
+    .sidebar{width:360px;position:sticky;top:88px}
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .statcard{padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02)}
+    .statcard .num{font-size:1.6rem;font-weight:700;color:var(--accent1)}
+    .guest-list{margin-top:12px;max-height:58vh;overflow:auto;padding-right:6px}
 
-    /* pulse */
-    .pulse{animation:pulse 700ms ease-out 1}
-    @keyframes pulse{0%{transform:scale(.99)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+    .guest{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;margin-bottom:8px;background:rgba(255,255,255,0.01)}
+    .guest .name{font-weight:600}
+    .guest .meta{color:var(--muted);font-size:0.9rem}
+
+    /* subtle animations */
+    .pulse{animation:pulse .7s ease-out 1}
+    @keyframes pulse{0%{transform:scale(.99)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+
+    /* tiny helpers */
+    .muted-small{color:var(--muted);font-size:0.9rem}
   </style>
 </head>
 <body>
   <div class="topbar">
-    <button id="hamb" class="hambutton" aria-label="menu">
-      <div class="bar"></div>
-      <div class="bar"></div>
-      <div class="bar"></div>
+    <button id="hamb" class="hamb" title="Menu">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
     </button>
-    <div class="title">🎟️ Event QR Check-In</div>
-    <div style="flex:1"></div>
-    <div class="muted">Camera status: <span id="status">Starting...</span></div>
-  </div>
-
-  <div class="layout">
-    <div class="left">
-      <div class="card">
-        <video id="video" autoplay muted playsinline></video>
-        <div id="resultCard" role="dialog" aria-live="polite" style="display:none">
-          <div id="resultTitle"></div>
-          <div id="resultRows">
-            <div class="row"><strong>Ticket:</strong> <span id="rcTicket"></span></div>
-            <div class="row"><strong>Name:</strong> <span id="rcName"></span></div>
-            <div class="row" id="rcCheckinRow" style="display:none"><strong>Checked in:</strong> <span id="rcCheckin"></span></div>
-            <div class="row muted" id="rcHint"></div>
-          </div>
-          <div class="card-actions" id="cardActions" style="display:none">
-            <button id="confirmBtn" class="btn btn-confirm">✅ Confirm Check-In</button>
-            <button id="holdBtn" class="btn btn-hold">⏸️ Hold</button>
-          </div>
-        </div>
-
-        <div style="margin-top:12px" class="manual">
-          <input id="manualInput" placeholder="Type or paste ticket id" aria-label="ticket id" />
-          <button id="manualLookup">Lookup</button>
-        </div>
-
-        <button id="scanAgainBtn">Scan Next Ticket</button>
-      </div>
+    <div style="display:flex;flex-direction:column">
+      <div class="title">White Penguin — Check-In</div>
+      <div class="muted-small">Fast QR scanning · Clean UI</div>
     </div>
-
-    <div class="right">
-      <div class="card">
-        <h3>Live Info</h3>
-        <div style="display:flex;gap:10px;align-items:center">
-          <div class="muted">Quick actions</div>
-          <button id="refreshStats" class="btn btn-close" style="margin-left:auto">Refresh</button>
-        </div>
-        <div style="margin-top:12px" class="muted">Use the menu at top-left for full guest lists & counters.</div>
-      </div>
+    <div class="top-actions">
+      <div class="muted" style="margin-right:10px">Live: <span id="status">starting camera...</span></div>
+      <button id="refreshStatsTop" class="btn btn-ghost small">Refresh stats</button>
     </div>
   </div>
 
-  <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar" aria-hidden="true">
-    <h3>Event Summary</h3>
-    <div class="stats">
-      <div class="stat"><div class="num" id="statTotal">—</div><div class="muted">Total</div></div>
-      <div class="stat"><div class="num" id="statChecked">—</div><div class="muted">Checked</div></div>
-      <div class="stat"><div class="num" id="statRemaining">—</div><div class="muted">Remaining</div></div>
+  <div class="main">
+    <!-- left -->
+    <div>
+      <div class="panel">
+        <div class="video-wrap">
+          <video id="video" autoplay playsinline muted></video>
+          <div id="resultCard" class="result" style="display:none">
+            <h3 id="resultTitle">—</h3>
+            <div class="row"><strong>Ticket:</strong><div id="rcTicket" style="margin-left:8px"></div></div>
+            <div class="row"><strong>Name:</strong><div id="rcName" style="margin-left:8px"></div></div>
+            <div class="row" id="rcCheckinRow" style="display:none"><strong>Checked in:</strong><div id="rcCheckin" style="margin-left:8px"></div></div>
+            <div class="row"><div id="rcHint" class="muted" style="margin-top:8px"></div></div>
+
+            <div class="actions" id="cardActions" style="display:none">
+              <button id="confirmBtn" class="btn btn-success">✅ Confirm Check-In</button>
+              <button id="holdBtn" class="btn btn-warning">⏸️ Hold</button>
+              <button id="closeBtn" class="btn btn-ghost">Close</button>
+            </div>
+          </div>
+
+          <div style="width:100%;display:flex;gap:8px;align-items:center;margin-top:12px">
+            <div style="flex:1">
+              <div class="manual">
+                <input id="manualInput" placeholder="Type or paste ticket id" />
+                <button id="manualLookup" class="btn btn-primary">Lookup</button>
+              </div>
+            </div>
+          </div>
+
+          <button id="scanAgainBtn">Scan Next Ticket</button>
+        </div>
+      </div>
     </div>
 
-    <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:6px">
-      <div class="muted">Guest details</div>
-      <button id="closeSidebar" class="btn btn-close">Close</button>
-    </div>
+    <!-- right -->
+    <aside class="sidebar">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><strong>Event Summary</strong><div class="muted-small">Quick overview & guest list</div></div>
+          <button id="openList" class="btn btn-ghost small">Open</button>
+        </div>
 
-    <div class="guest-list" id="guestList">Loading...</div>
-  </aside>
+        <div style="margin-top:12px" class="stats">
+          <div class="statcard"><div class="muted">Total</div><div class="num" id="statTotal">—</div></div>
+          <div class="statcard"><div class="muted">Checked In</div><div class="num" id="statChecked">—</div></div>
+        </div>
+
+        <div style="margin-top:12px" class="statcard"><div class="muted">Remaining</div><div class="num" id="statRemaining">—</div></div>
+
+        <div style="margin-top:12px"><input id="filterInput" placeholder="Filter by name or ticket" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit" /></div>
+
+        <div class="guest-list" id="guestList" style="margin-top:12px">Loading...</div>
+      </div>
+    </aside>
+  </div>
 
   <!-- jsQR -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-  <script>
-    // --- settings ---
-    const DEBUG = true;
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKr2r9QItmXB-5lvxOvmP9itkHItpk7Ww03cVc9N0zAhQHH4zxrf9L9SJrPThgfOjYlw/exec"; // keep your url
 
-    // --- DOM ---
+  <script>
+    // ========== SETTINGS ==========
+    const DEBUG = true;
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKr2r9QItmXB-5lvxOvmP9itkHItpk7Ww03cVc9N0zAhQHH4zxrf9L9SJrPThgfOjYlw/exec";
+    // ------------------------------
+
+    // DOM
     const video = document.getElementById('video');
     const statusEl = document.getElementById('status');
     const resultCard = document.getElementById('resultCard');
@@ -158,153 +185,278 @@
     const cardActions = document.getElementById('cardActions');
     const confirmBtn = document.getElementById('confirmBtn');
     const holdBtn = document.getElementById('holdBtn');
+    const closeBtn = document.getElementById('closeBtn');
     const scanAgainBtn = document.getElementById('scanAgainBtn');
     const manualInput = document.getElementById('manualInput');
     const manualLookup = document.getElementById('manualLookup');
-    const hamb = document.getElementById('hamb');
-    const sidebar = document.getElementById('sidebar');
-    const closeSidebar = document.getElementById('closeSidebar');
+
     const statTotal = document.getElementById('statTotal');
     const statChecked = document.getElementById('statChecked');
     const statRemaining = document.getElementById('statRemaining');
     const guestList = document.getElementById('guestList');
-    const refreshStats = document.getElementById('refreshStats');
+    const filterInput = document.getElementById('filterInput');
+    const refreshStatsTop = document.getElementById('refreshStatsTop');
 
-    // --- state ---
-    let scanning = false, mediaStream = null, lastScannedRaw = '', awaitingConfirmation = false;
+    // state
+    let scanning = false;
+    let mediaStream = null;
+    let lastScannedRaw = "";
+    let awaitingConfirmation = false;
+    let lastLoadedRows = [];
 
-    function log(...args){ if (DEBUG) console.log('[Scanner]',...args); }
+    function log(...a){ if(DEBUG) console.log(...a); }
 
-    function showMessageCard(title,ticketId,name,opts={}){
-      const { allowActions=true, isChecked=false, wasAlreadyChecked=false, checkinValue='', hint='' } = opts;
-      resultCard.style.display='block'; resultCard.className='';
-      if (!allowActions && !isChecked && !wasAlreadyChecked) resultCard.classList.add('error');
-      else if (isChecked && !wasAlreadyChecked) resultCard.classList.add('success');
-      else if (wasAlreadyChecked) resultCard.classList.add('warning');
-      else resultCard.classList.add('success');
-      resultTitle.textContent = title || '';
-      rcTicket.textContent = ticketId || '';
-      rcName.textContent = name || '(no name)';
-      rcCheckinRow.style.display = (isChecked||wasAlreadyChecked) ? 'block' : 'none';
-      rcCheckin.textContent = checkinValue || '';
-      rcHint.textContent = hint || '';
-      if (allowActions && !wasAlreadyChecked && !isChecked){ cardActions.style.display='flex'; confirmBtn.style.display='inline-block'; holdBtn.style.display='inline-block'; }
-      else { cardActions.style.display='none'; }
+    // beep
+    function beepShort() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 880;
+        g.gain.value = 0.08;
+        o.connect(g); g.connect(ctx.destination);
+        o.start();
+        setTimeout(()=>{ o.stop(); ctx.close(); }, 120);
+      } catch(e){}
     }
 
-    function hideCard(){ resultCard.style.display='none'; cardActions.style.display='none'; awaitingConfirmation=false; }
+    // UI helpers
+    function showMessageCard(title, ticketId, name, opts = {}) {
+      const { allowActions = true, isChecked = false, wasAlreadyChecked = false, checkinValue = "", hint = "" } = opts;
+      resultCard.style.display = 'block';
+      resultTitle.textContent = title || "";
+      rcTicket.textContent = ticketId || "";
+      rcName.textContent = name || "(no name)";
+      rcCheckinRow.style.display = (isChecked || wasAlreadyChecked) ? "flex" : "none";
+      rcCheckin.textContent = checkinValue || "";
+      rcHint.textContent = hint || "";
+      if (allowActions && !wasAlreadyChecked && !isChecked) {
+        cardActions.style.display = 'flex';
+      } else {
+        cardActions.style.display = 'none';
+      }
+    }
+    function hideCard(){ resultCard.style.display = 'none'; cardActions.style.display='none'; awaitingConfirmation=false; }
 
-    function stopScannerAndStream(){ scanning=false; try{ if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null;} }catch(e){log('stop',e);} }
+    // camera control
+    function stopScannerAndStream() {
+      scanning = false;
+      try {
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(t => t.stop());
+          mediaStream = null;
+        }
+      } catch(e){ log('stop stream', e); }
+    }
 
-    async function startCameraAndScan(){
-      try{
-        statusEl.textContent = 'Requesting camera permission...';
+    async function startCameraAndScan() {
+      try {
+        statusEl.textContent = 'Requesting camera...';
         stopScannerAndStream();
-        mediaStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }, audio:false });
-        video.srcObject = mediaStream; video.setAttribute('playsinline', true); await video.play();
-        statusEl.textContent = 'Camera started — scanning...'; lastScannedRaw=''; awaitingConfirmation=false; startScannerLoop();
-      } catch(err){ console.error('Camera start error',err); statusEl.textContent = 'Camera error: '+(err.message||err); showMessageCard('❌ Camera Error','','',{ allowActions:false, hint:'Please allow camera access or try again.' }); scanAgainBtn.style.display='block'; }
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+        video.srcObject = mediaStream;
+        video.setAttribute('playsinline', true);
+        await video.play();
+        statusEl.textContent = 'Camera started — scanning...';
+        lastScannedRaw = "";
+        awaitingConfirmation = false;
+        startScannerLoop();
+      } catch (err) {
+        console.error('camera error', err);
+        statusEl.textContent = 'Camera error: ' + (err.message || err);
+        showMessageCard('❌ Camera Error', '', '', { allowActions:false, hint: 'Allow camera or try another browser.' });
+        scanAgainBtn.style.display = 'block';
+      }
     }
 
-    function startScannerLoop(){
-      const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); if(scanning) scanning=false; scanning=true;
-      function frame(){ if(!scanning) return; if(awaitingConfirmation) return requestAnimationFrame(frame);
-        if(video.readyState === video.HAVE_ENOUGH_DATA){ canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480; try{ ctx.drawImage(video,0,0,canvas.width,canvas.height); }catch{ return requestAnimationFrame(frame);} 
-          let imageData; try{ imageData = ctx.getImageData(0,0,canvas.width,canvas.height); }catch{ return requestAnimationFrame(frame);} 
-          let code; try{ code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts:'attemptBoth' }); }catch{}
-          if(code && code.data){ const raw = String(code.data||''); if(raw === lastScannedRaw) return requestAnimationFrame(frame); lastScannedRaw = raw; beepShort(); try{ navigator.vibrate && navigator.vibrate(100);}catch{};
-            awaitingConfirmation=true; statusEl.textContent='QR detected — looking up...'; stopScannerAndStream(); performLookup(raw).catch(err=>{ console.error('Lookup error',err); showMessageCard('❌ Lookup Error', raw, '', { allowActions:false, hint: String(err) }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; }); return; }
+    function startScannerLoop() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      scanning = true;
+      function frame() {
+        if (!scanning) return;
+        if (awaitingConfirmation) return requestAnimationFrame(frame);
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth || 640;
+          canvas.height = video.videoHeight || 480;
+          try { ctx.drawImage(video, 0, 0, canvas.width, canvas.height); } catch { return requestAnimationFrame(frame); }
+          let imageData;
+          try { imageData = ctx.getImageData(0,0,canvas.width,canvas.height); } catch { return requestAnimationFrame(frame); }
+          let code;
+          try { code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" }); } catch {}
+          if (code && code.data) {
+            const raw = String(code.data || "");
+            if (raw === lastScannedRaw) return requestAnimationFrame(frame);
+            lastScannedRaw = raw;
+            beepShort();
+            try { navigator.vibrate && navigator.vibrate(100); } catch {}
+            awaitingConfirmation = true;
+            statusEl.textContent = 'QR detected — looking up...';
+            stopScannerAndStream();
+            performLookup(raw).catch(err => {
+              console.error('lookup err', err);
+              showMessageCard('❌ Lookup Error', raw, '', { allowActions:false, hint: String(err) });
+              scanAgainBtn.style.display = 'block';
+              awaitingConfirmation = false;
+            });
+            return;
+          }
         }
         requestAnimationFrame(frame);
       }
       requestAnimationFrame(frame);
     }
 
-    function beepShort(){ try{ const ctx = new (window.AudioContext||window.webkitAudioContext)(); const o = ctx.createOscillator(); const g = ctx.createGain(); o.type='sine'; o.frequency.value=880; g.gain.value=0.08; o.connect(g); g.connect(ctx.destination); o.start(); setTimeout(()=>{ o.stop(); ctx.close(); },120); }catch{} }
-
-    async function performLookup(rawScanned){
-      const raw = String(rawScanned||''); const ticketId = raw.replace(/\r?\n|\r/g,'').trim().toLowerCase();
-      if(!ticketId){ showMessageCard('❌ Invalid QR','','',{ allowActions:false, hint:'Empty QR code.' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
+    // network: lookup & checkin
+    async function performLookup(rawScanned) {
+      const raw = String(rawScanned || "");
+      const ticketId = raw.replace(/\r?\n|\r/g, "").trim().toLowerCase();
+      if (!ticketId) {
+        showMessageCard('❌ Invalid QR', '', '', { allowActions:false, hint: 'Empty QR' });
+        scanAgainBtn.style.display = 'block';
+        awaitingConfirmation = false;
+        return;
+      }
       const url = `${WEB_APP_URL}?action=lookup&ticketId=${encodeURIComponent(ticketId)}`;
-      let resp; try{ resp = await fetch(url, { cache:'no-store' }); }catch(err){ showMessageCard('❌ Network Error', ticketId, '', { allowActions:false, hint:'Network issue. Try again.' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
-      if(!resp.ok){ showMessageCard('❌ Server Error', ticketId, '', { allowActions:false, hint:`Server returned ${resp.status}` }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
-      let data; try{ data = await resp.json(); }catch{ showMessageCard('❌ Invalid Response', ticketId, '', { allowActions:false, hint:'Server did not return valid JSON.'}); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
-      if(!data.success){ showMessageCard('❌ Error', ticketId, '', { allowActions:false, hint: data.error || 'Unknown error' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
-      if(!data.found){ showMessageCard('❌ Ticket Not Found', ticketId, '', { allowActions:false, hint:'Ticket not found in database.' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
+      let resp;
+      try { resp = await fetch(url, { cache: "no-store" }); } catch (err) {
+        showMessageCard('❌ Network Error', ticketId, '', { allowActions:false, hint: 'Network issue' });
+        scanAgainBtn.style.display = 'block';
+        awaitingConfirmation = false;
+        return;
+      }
+      if (!resp.ok) {
+        showMessageCard('❌ Server Error', ticketId, '', { allowActions:false, hint: `Server ${resp.status}` });
+        scanAgainBtn.style.display = 'block';
+        awaitingConfirmation = false;
+        return;
+      }
+      let data;
+      try { data = await resp.json(); } catch { showMessageCard('❌ Invalid Response', ticketId, '', { allowActions:false, hint: 'Bad JSON' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
+      if (!data.success) { showMessageCard('❌ Error', ticketId, '', { allowActions:false, hint: data.error || 'Unknown' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
+      if (!data.found) { showMessageCard('❌ Ticket Not Found', ticketId, '', { allowActions:false, hint: 'Ticket missing' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
 
-      const attendeeName = data.name || '(no name)'; const alreadyCheckedIn = !!data.alreadyCheckedIn; const checkinValue = data.checkinValue || '';
-      if(alreadyCheckedIn){ showMessageCard('⚠️ Already Checked In', ticketId, attendeeName, { allowActions:false, isChecked:true, wasAlreadyChecked:true, checkinValue, hint:'Ticket was already checked in.' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
+      const attendeeName = data.name || '(no name)';
+      const alreadyCheckedIn = !!data.alreadyCheckedIn;
+      const checkinValue = data.checkinValue || '';
 
-      showMessageCard('🔎 Verify Attendee', ticketId, attendeeName, { allowActions:true, hint:'If name matches, press Confirm Check-In. Otherwise press Hold.' });
+      if (alreadyCheckedIn) {
+        showMessageCard('⚠️ Already Checked In', ticketId, attendeeName, { allowActions:false, isChecked:true, wasAlreadyChecked:true, checkinValue, hint: 'Ticket already checked-in' });
+        scanAgainBtn.style.display='block'; awaitingConfirmation=false; return;
+      }
+
+      showMessageCard('🔎 Verify Attendee', ticketId, attendeeName, { allowActions:true, hint: 'If OK, press Confirm' });
 
       confirmBtn.onclick = async () => {
         confirmBtn.disabled = true; confirmBtn.textContent = 'Checking in...';
-        try{ const result = await performCheckin(ticketId); showMessageCard('✅ Checked In', ticketId, result.name || attendeeName, { allowActions:false, isChecked:true, checkinValue: result.checkinValue || '', hint:'Check-in successful.' }); resultCard.classList.add('pulse'); try{ navigator.vibrate && navigator.vibrate([60,40,60]); }catch{}; await refreshStatsOnce(); }
-        catch(err){ showMessageCard('❌ Check-in Failed', ticketId, attendeeName, { allowActions:false, hint: String(err) }); }
-        finally{ confirmBtn.disabled = false; confirmBtn.textContent = '✅ Confirm Check-In'; scanAgainBtn.style.display='block'; awaitingConfirmation=false; }
+        try {
+          const result = await performCheckin(ticketId);
+          showMessageCard('✅ Checked In', ticketId, result.name || attendeeName, { allowActions:false, isChecked:true, checkinValue: result.checkinValue || '', hint: 'Success' });
+          resultCard.classList.add('pulse');
+          try { navigator.vibrate && navigator.vibrate([60,40,60]); } catch {}
+          await refreshStats();
+        } catch (err) {
+          showMessageCard('❌ Check-in Failed', ticketId, attendeeName, { allowActions:false, hint: String(err) });
+        } finally {
+          confirmBtn.disabled = false; confirmBtn.textContent = '✅ Confirm Check-In';
+          scanAgainBtn.style.display='block'; awaitingConfirmation=false;
+        }
       };
 
-      holdBtn.onclick = () => { hideCard(); scanAgainBtn.style.display='block'; statusEl.textContent = "Paused. Press 'Scan Next Ticket' to continue."; awaitingConfirmation=false; };
+      holdBtn.onclick = () => { hideCard(); scanAgainBtn.style.display='block'; statusEl.textContent = "Paused. Press Scan Next Ticket"; awaitingConfirmation=false; };
+      closeBtn.onclick = () => { hideCard(); awaitingConfirmation=false; };
     }
 
-    async function performCheckin(ticketId){ const url = `${WEB_APP_URL}?action=checkin&ticketId=${encodeURIComponent(ticketId)}`; const resp = await fetch(url, { cache:'no-store' }); if(!resp.ok) throw new Error(`Server returned ${resp.status}`); const data = await resp.json().catch(()=>({})); if(!data.success) throw new Error(data.error || 'Unknown error'); return data; }
+    async function performCheckin(ticketId) {
+      const url = `${WEB_APP_URL}?action=checkin&ticketId=${encodeURIComponent(ticketId)}`;
+      const resp = await fetch(url, { cache: "no-store" });
+      if (!resp.ok) throw new Error(`Server ${resp.status}`);
+      const data = await resp.json().catch(()=>({}));
+      if (!data.success) throw new Error(data.error || 'Unknown error');
+      return data;
+    }
 
-    // manual lookup helper
-    manualLookup.addEventListener('click', async ()=>{
-      const val = (manualInput.value||'').trim(); if(!val) return alert('Please type a ticket id');
-      statusEl.textContent = 'Looking up...'; hideCard(); await performLookup(val); statusEl.textContent = 'Manual lookup done.';
-      scanAgainBtn.style.display='block';
+    // manual lookup
+    manualLookup.addEventListener('click', async ()=> {
+      const v = (manualInput.value||'').trim();
+      if (!v) return alert('Type a ticket id');
+      statusEl.textContent = 'Manual lookup...';
+      hideCard();
+      await performLookup(v);
+      statusEl.textContent = 'Manual lookup done';
     });
 
-    scanAgainBtn.addEventListener('click', async ()=>{ hideCard(); scanAgainBtn.style.display='none'; statusEl.textContent='Restarting camera...'; await startCameraAndScan(); });
+    scanAgainBtn.addEventListener('click', async ()=> {
+      hideCard();
+      scanAgainBtn.style.display='none';
+      statusEl.textContent = 'Restarting camera...';
+      await startCameraAndScan();
+    });
 
-    if(!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia){ statusEl.textContent='Camera not supported.'; showMessageCard('❌ Unsupported','',{ allowActions:false, hint:"Your browser doesn't support camera." }); scanAgainBtn.style.display='block'; } else { setTimeout(()=>startCameraAndScan(), 120); }
-
-    // --- sidebar & stats ---
-    hamb.addEventListener('click', ()=>{ sidebar.classList.add('open'); sidebar.setAttribute('aria-hidden','false'); refreshStatsOnce(); });
-    closeSidebar.addEventListener('click', ()=>{ sidebar.classList.remove('open'); sidebar.setAttribute('aria-hidden','true'); });
-    refreshStats.addEventListener('click', refreshStatsOnce);
-
-    async function refreshStatsOnce(){
-      statTotal.textContent = '—'; statChecked.textContent = '—'; statRemaining.textContent='—'; guestList.innerHTML = 'Loading...';
-      try{
-        const url = `${WEB_APP_URL}?action=stats`;
-        const resp = await fetch(url,{cache:'no-store'});
-        if(!resp.ok) throw new Error(`Server ${resp.status}`);
+    // stats: fetch and render
+    async function refreshStats() {
+      statTotal.textContent = '—'; statChecked.textContent = '—'; statRemaining.textContent = '—';
+      guestList.innerHTML = 'Loading...';
+      try {
+        const resp = await fetch(`${WEB_APP_URL}?action=stats`, { cache: "no-store" });
+        if (!resp.ok) throw new Error('Server ' + resp.status);
         const data = await resp.json();
-        if(!data.success) throw new Error(data.error || 'Unknown error');
-        // data should contain totals and rows
-        statTotal.textContent = data.total || 0;
-        statChecked.textContent = data.checked || 0;
-        statRemaining.textContent = (data.total - data.checked) || 0;
-        renderGuestList(data.rows || []);
-      } catch(err){ log('stats error',err); guestList.innerHTML = `<div class="muted">Unable to load guest list: ${err.message||err}</div>`; }
+        if (!data.success) throw new Error(data.error || 'Unknown');
+        statTotal.textContent = data.total ?? 0;
+        statChecked.textContent = data.checked ?? 0;
+        statRemaining.textContent = ( (data.total||0) - (data.checked||0) );
+        lastLoadedRows = data.rows || [];
+        renderGuestList(lastLoadedRows);
+      } catch (err) {
+        guestList.innerHTML = `<div class="muted">Unable to load: ${err.message||err}</div>`;
+        log('stats error',err);
+      }
     }
 
-    function renderGuestList(rows){ if(!rows || !rows.length){ guestList.innerHTML = '<div class="muted">No guests found</div>'; return; }
+    function renderGuestList(rows) {
+      if (!rows || !rows.length) { guestList.innerHTML = '<div class="muted">No guests</div>'; return; }
+      const filter = (filterInput.value||'').toLowerCase().trim();
       guestList.innerHTML = '';
-      rows.forEach(r=>{
-        const div = document.createElement('div'); div.className = 'guest';
-        const meta = document.createElement('div'); meta.className='meta';
-        const a = document.createElement('div'); a.textContent = r.name || '(no name)'; a.style.fontWeight='600';
-        const b = document.createElement('div'); b.className='muted'; b.textContent = r.ticket || '' + (r.checked ? ` • ${r.checkedAt||'checked'}` : ' • not checked');
-        meta.appendChild(a); meta.appendChild(b);
+      rows.forEach(r => {
+        if (filter) {
+          const match = (r.name||'').toLowerCase().includes(filter) || (r.ticket||'').toLowerCase().includes(filter);
+          if (!match) return;
+        }
+        const d = document.createElement('div'); d.className = 'guest';
+        const left = document.createElement('div'); left.style.flex='1';
+        const name = document.createElement('div'); name.className='name'; name.textContent = r.name || '(no name)';
+        const meta = document.createElement('div'); meta.className='meta'; meta.textContent = (r.ticket || '') + (r.checked ? ` • ${r.checkedAt || 'checked'}` : ' • not checked');
+        left.appendChild(name); left.appendChild(meta);
         const right = document.createElement('div');
-        const call = document.createElement('button'); call.className='call-btn'; call.textContent='Call';
-        // since phone isn't collected this will be disabled unless phone exists
-        if(!r.phone) { call.classList.add('disabled'); call.title = 'No phone number collected'; }
-        else { call.addEventListener('click', ()=> window.location.href = `tel:${r.phone}`); }
+        const call = document.createElement('button'); call.className='btn small';
+        call.style.background='transparent'; call.style.border='1px solid rgba(255,255,255,0.04)'; call.style.color='var(--muted)';
+        call.textContent = 'Call';
+        if (!r.phone) { call.disabled = true; call.style.opacity = 0.5; call.title = 'No phone collected'; }
+        else { call.onclick = ()=> window.location.href = `tel:${r.phone}`; }
         right.appendChild(call);
-        div.appendChild(meta); div.appendChild(right);
-        guestList.appendChild(div);
+        d.appendChild(left); d.appendChild(right);
+        guestList.appendChild(d);
       });
     }
 
-    // initialise stats periodically when sidebar open? user can refresh manually
+    // filtering
+    filterInput.addEventListener('input', ()=> renderGuestList(lastLoadedRows));
 
-    // --- manual refresh on load for small UI data ---
-    // don't call until the user opens sidebar; we will load on open
+    // top refresh
+    refreshStatsTop.addEventListener('click', refreshStats);
 
+    // boot
+    if (!("mediaDevices" in navigator) || !navigator.mediaDevices.getUserMedia) {
+      statusEl.textContent = 'Camera not supported';
+      showMessageCard('❌ Unsupported', '', '', { allowActions:false, hint: "Browser doesn't support camera." });
+      scanAgainBtn.style.display='block';
+    } else {
+      setTimeout(()=> startCameraAndScan(), 120);
+    }
+
+    // don't auto-load stats until user refreshes - but load once after 1s
+    setTimeout(() => refreshStats(), 800);
   </script>
 </body>
 </html>
