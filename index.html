@@ -3,56 +3,47 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>White Penguin — Event Check-In</title>
-
+  <title>White Penguin — Check-In (Improved Sidebar)</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
-
   <style>
     :root{
       --bg: #061223;
       --panel: #0b1520;
+      --glass-bg: rgba(12,18,28,0.74);   /* slight glass */
+      --glass-border: rgba(255,255,255,0.04);
       --muted: #9aa4b2;
       --accent1: #7c3aed;
       --accent2: #06b6d4;
       --success: #16a34a;
       --warning: #f59e0b;
-      --danger: #ef4444;
-      --glass: rgba(255,255,255,0.02);
       --radius: 14px;
-      --card-border: rgba(255,255,255,0.03);
+      --card-shadow: 0 10px 30px rgba(2,6,23,0.6);
     }
     *{box-sizing:border-box}
-    html,body{height:100%; margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; -webkit-font-smoothing:antialiased;}
-    body{
-      background: linear-gradient(180deg,var(--bg) 0%, #041021 100%);
-      color: #e6eef2;
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#e6eef2;background:linear-gradient(180deg,var(--bg),#041021)}
+    .topbar{
+      display:flex;align-items:center;padding:12px 16px;
+      border-bottom:1px solid rgba(255,255,255,0.02);position:sticky;top:0;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);z-index:120
     }
-
-    /* Topbar */
-    .topbar{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.02);position:sticky;top:0;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);z-index:60}
-    .hamb{width:46px;height:46px;border-radius:12px;background:var(--panel);display:flex;flex-direction:column;justify-content:center;align-items:center;border:none;cursor:pointer;margin-right:12px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+    .hamb{width:48px;height:48px;border-radius:12px;background:var(--panel);display:flex;flex-direction:column;justify-content:center;align-items:center;border:none;cursor:pointer;margin-right:12px;box-shadow:0 8px 24px rgba(0,0,0,0.6)}
     .hamb .bar{width:20px;height:2px;background:var(--muted);margin:3px 0;border-radius:2px}
-    .brand {display:flex;flex-direction:column}
-    .brand .title {font-weight:700;color:var(--accent2);letter-spacing:0.2px}
-    .brand .subtitle {font-size:12px;color:var(--muted)}
-    .top-actions {margin-left:auto;display:flex;gap:10px;align-items:center}
+    .brand{display:flex;flex-direction:column}
+    .brand .title{font-weight:700; color:var(--accent2)}
+    .brand .subtitle{font-size:12px;color:var(--muted)}
+    .top-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
 
-    /* Layout */
-    .container {display:grid;grid-template-columns: 1fr 360px;gap:18px;padding:18px;}
-    @media (max-width:1000px){ .container{grid-template-columns:1fr;padding:12px} .sidebar{position:fixed;right:0;left:0;top:64px;height:calc(100% - 64px);background:transparent} }
+    .container{display:grid;grid-template-columns:1fr 380px;gap:18px;padding:18px}
+    @media (max-width:1000px){ .container{grid-template-columns:1fr;padding:12px} }
 
-    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:var(--radius);padding:16px;border:1px solid var(--card-border);box-shadow: 0 10px 30px rgba(0,0,0,0.6)}
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:14px;padding:16px;border:1px solid rgba(255,255,255,0.02);box-shadow:var(--card-shadow)}
     .video-wrap{display:flex;flex-direction:column;gap:12px;align-items:center}
     video{width:100%;max-width:820px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);background:#000}
     #status{color:var(--muted);font-size:0.95rem}
 
-    /* result card */
-    .result{width:100%;margin-top:6px;padding:12px;border-radius:10px;background:var(--panel);border:1px solid rgba(255,255,255,0.02)}
-    .result h3{margin:0 0 6px 0}
+    .result{width:100%;margin-top:8px;padding:12px;border-radius:10px;background:var(--panel);border:1px solid rgba(255,255,255,0.02)}
     .row{display:flex;gap:8px;align-items:center}
     .muted{color:var(--muted);font-size:0.95rem}
 
-    /* buttons */
     .actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
     .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
     .btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#021220}
@@ -62,42 +53,49 @@
     .small{padding:8px 10px;font-size:0.95rem}
     .btn.disabled{opacity:0.45;cursor:not-allowed}
 
-    /* manual input */
     .manual{display:flex;gap:8px}
     .manual input{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
 
-    /* Scan next */
     #scanAgainBtn{display:none;margin-top:8px;padding:10px 14px;border-radius:10px;border:none;background:var(--accent2);color:#021220;cursor:pointer}
 
-    /* sidebar */
-    .sidebar{width:360px;position:sticky;top:88px}
-    .sidebar .panel{padding:14px}
+    /* ---------- SIDEBAR (slides in from LEFT on desktop, full-screen drawer on mobile) ---------- */
+    .sidebar-container{position:fixed;left:0;top:64px;bottom:0;width:420px;max-width:92vw;padding:18px;pointer-events:none;z-index:140}
+    .sidebar{width:100%;height:100%;border-radius:14px;background:var(--glass-bg);backdrop-filter: blur(8px);border:1px solid var(--glass-border);box-shadow:var(--card-shadow);transform:translateX(-20px);opacity:0;transition:transform .32s ease,opacity .32s ease;pointer-events:auto}
+    .sidebar.open{transform:translateX(0);opacity:1}
+    @media (max-width:1000px){
+      .sidebar-container{left:0;right:0;top:64px;padding:12px}
+      .sidebar{width:100%;height:calc(100vh - 84px);border-radius:12px}
+    }
+
+    .sidebar .panel{background:transparent;border:none;padding:14px}
+
     .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
     .statcard{padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border:1px solid rgba(255,255,255,0.02)}
     .statcard .label{color:var(--muted);font-size:13px}
     .statcard .num{font-size:1.4rem;font-weight:800;color:var(--accent1);margin-top:6px}
 
-    /* list controls */
     .list-controls{display:flex;gap:8px;margin-top:12px;align-items:center}
+    .list-btn{padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted);cursor:pointer}
+    .list-btn.active{background:linear-gradient(90deg, rgba(124,58,237,0.12), rgba(6,182,212,0.06));border:1px solid rgba(124,58,237,0.18);color:#e9defc}
+
     .filter{margin-top:12px}
     .filter input{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
 
-    .guest-list{margin-top:12px;max-height:55vh;overflow:auto;padding-right:6px}
+    .guest-list{margin-top:12px;max-height:58vh;overflow:auto;padding-right:6px}
     .guest{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;margin-bottom:10px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)}
     .guest .left{flex:1}
     .guest .name{font-weight:700}
     .guest .meta{color:var(--muted);font-size:0.9rem;margin-top:6px}
 
-    /* active for list buttons */
-    .list-btn.active{background:linear-gradient(90deg, rgba(124,58,237,0.12), rgba(6,182,212,0.06));border:1px solid rgba(124,58,237,0.18);color:#e9defc}
-
-    /* drawer for mobile */
-    .drawer {position:fixed;top:64px;right:0;left:0;bottom:0;background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.3));display:none;z-index:80;padding:12px}
-    .drawer.open{display:block}
-    .drawer .panel{height:100%;overflow:auto}
+    /* spinner small */
+    .spinner{width:22px;height:22px;border-radius:50%;border:3px solid rgba(255,255,255,0.06);border-top-color:var(--accent2);animation:spin .9s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
     .pulse{animation:pulse .7s ease-out 1}
     @keyframes pulse{0%{transform:scale(.99)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+
+    /* responsive container when sidebar closed (so content covers whole) */
+    .content-area{max-width:1100px;margin:0 auto}
   </style>
 </head>
 <body>
@@ -108,21 +106,21 @@
 
     <div class="brand">
       <div class="title">White Penguin — Check-In</div>
-      <div class="subtitle">Fast QR scanning · Clean UI</div>
+      <div class="subtitle">Fast QR scanning · Clean UX</div>
     </div>
 
     <div class="top-actions">
       <div id="status" class="muted">Starting camera...</div>
-      <button id="refreshStatsTop" class="btn ghost small" title="Refresh summary">Refresh stats</button>
+      <button id="refreshStatsTop" class="btn ghost small" title="Refresh summary">Refresh</button>
     </div>
   </div>
 
   <div class="container">
-    <!-- LEFT: scanner / controls -->
-    <main>
+    <main class="content-area">
       <div class="panel">
         <div class="video-wrap">
           <video id="video" autoplay playsinline muted></video>
+
           <div id="resultCard" class="result" style="display:none">
             <h3 id="resultTitle">—</h3>
             <div class="row"><strong>Ticket:</strong><div id="rcTicket" style="margin-left:8px"></div></div>
@@ -131,8 +129,8 @@
             <div style="margin-top:8px" id="rcHint" class="muted"></div>
 
             <div class="actions" id="cardActions" style="display:none">
-              <button id="confirmBtn" class="btn success">✅ Confirm Check-In</button>
-              <button id="holdBtn" class="btn warn">⏸️ Hold</button>
+              <button id="confirmBtn" class="btn success">✅ Confirm</button>
+              <button id="holdBtn" class="btn warn">⏸ Hold</button>
               <button id="closeBtn" class="btn ghost">Close</button>
             </div>
           </div>
@@ -151,15 +149,23 @@
       </div>
     </main>
 
-    <!-- RIGHT: summary / guest list -->
-    <aside class="sidebar">
+    <!-- Dummy right column to keep layout on desktop (sidebar slides in over it) -->
+    <aside style="display:none;"></aside>
+  </div>
+
+  <!-- Sidebar container (slides from LEFT) -->
+  <div class="sidebar-container" aria-hidden="true">
+    <div id="sidebar" class="sidebar" role="dialog" aria-label="Event summary">
       <div class="panel" id="sidebarPanel">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
             <strong>Event Summary</strong>
-            <div class="muted" style="margin-top:4px;font-size:13px">Open the menu (top-left) to view guest lists</div>
+            <div class="muted" style="margin-top:4px;font-size:13px">Guest lists & quick actions</div>
           </div>
-          <button id="openList" class="btn ghost small">Open</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div id="sidebarSpinner" style="display:none"><div class="spinner" /></div>
+            <button id="closeSidebar" class="btn ghost small">Close</button>
+          </div>
         </div>
 
         <div class="summary-grid">
@@ -168,7 +174,7 @@
             <div class="num" id="statTotal">—</div>
           </div>
           <div class="statcard">
-            <div class="label">Checked In</div>
+            <div class="label">Checked</div>
             <div class="num" id="statChecked">—</div>
           </div>
         </div>
@@ -178,10 +184,10 @@
           <div class="num" id="statRemaining">—</div>
         </div>
 
-        <div style="margin-top:12px" class="list-controls">
-          <button id="btnAll" class="btn ghost small list-btn">All</button>
-          <button id="btnChecked" class="btn ghost small list-btn">Checked</button>
-          <button id="btnNot" class="btn ghost small list-btn">Not checked</button>
+        <div class="list-controls" style="margin-top:12px">
+          <button id="btnAll" class="list-btn">All</button>
+          <button id="btnChecked" class="list-btn">Checked</button>
+          <button id="btnNot" class="list-btn">Not checked</button>
         </div>
 
         <div class="filter">
@@ -190,46 +196,26 @@
 
         <div class="guest-list" id="guestList">Open the menu to load guests</div>
       </div>
-    </aside>
-  </div>
-
-  <!-- mobile drawer (used on small screens) -->
-  <div id="drawer" class="drawer" aria-hidden="true">
-    <div class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Guest List</strong><div class="muted" style="font-size:12px">Tap outside to close</div></div>
-        <button id="closeDrawer" class="btn ghost small">Close</button>
-      </div>
-
-      <div style="margin-top:12px" class="list-controls">
-        <button id="mobileBtnAll" class="btn ghost small list-btn">All</button>
-        <button id="mobileBtnChecked" class="btn ghost small list-btn">Checked</button>
-        <button id="mobileBtnNot" class="btn ghost small list-btn">Not checked</button>
-      </div>
-
-      <div style="margin-top:12px"><input id="mobileFilter" placeholder="Filter by name or ticket" /></div>
-      <div class="guest-list" id="mobileGuestList" style="margin-top:12px"></div>
     </div>
   </div>
 
-  <!-- jsQR -->
+  <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-
   <script>
-    // ============ CONFIG ============
+    /* ====== CONFIG ====== */
     const DEBUG = true;
-    // <-- replace with your deployed Apps Script URL -->
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPsGus1r56o49QeIbpx0fYnNZalZTdHlba1bCyyU8k26vBnOXmzXEbEWklWuhdWlrS/exec";
-    // ================================
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPsGus1r56o49QeIbpx0fYnNZalZTdHlba1bCyyU8k26vBnOXmzXEbEWklWuhdWlrS/exec"; // <-- update me
+    /* ==================== */
 
-    // DOM references
+    // DOM
     const hamb = document.getElementById('hamb');
-    const drawer = document.getElementById('drawer');
-    const closeDrawer = document.getElementById('closeDrawer');
-    const openListBtn = document.getElementById('openList');
+    const sidebarContainer = document.querySelector('.sidebar-container');
+    const sidebar = document.getElementById('sidebar');
+    const closeSidebar = document.getElementById('closeSidebar');
+    const sidebarSpinner = document.getElementById('sidebarSpinner');
     const statusEl = document.getElementById('status');
-    const video = document.getElementById('video');
 
+    const video = document.getElementById('video');
     const resultCard = document.getElementById('resultCard');
     const resultTitle = document.getElementById('resultTitle');
     const rcTicket = document.getElementById('rcTicket');
@@ -246,7 +232,6 @@
     const manualInput = document.getElementById('manualInput');
     const manualLookup = document.getElementById('manualLookup');
 
-    // summary / list
     const statTotal = document.getElementById('statTotal');
     const statChecked = document.getElementById('statChecked');
     const statRemaining = document.getElementById('statRemaining');
@@ -257,24 +242,17 @@
     const guestList = document.getElementById('guestList');
     const refreshStatsTop = document.getElementById('refreshStatsTop');
 
-    // mobile drawer controls
-    const mobileBtnAll = document.getElementById('mobileBtnAll');
-    const mobileBtnChecked = document.getElementById('mobileBtnChecked');
-    const mobileBtnNot = document.getElementById('mobileBtnNot');
-    const mobileFilter = document.getElementById('mobileFilter');
-    const mobileGuestList = document.getElementById('mobileGuestList');
-
     // state
     let mediaStream = null;
     let scanning = false;
     let lastScannedRaw = "";
     let awaitingConfirmation = false;
-    let lastLoadedRows = []; // rows returned by stats endpoint
-    let listMode = "all"; // all | checked | not
+    let lastLoadedRows = [];
+    let listMode = 'all';
 
-    function log(...args){ if (DEBUG) console.log('[app]',...args); }
+    function log(...a){ if (DEBUG) console.log('[app]',...a); }
 
-    // ----------------- camera & scanner -----------------
+    /* ---------- CAMERA & SCANNER ---------- */
     async function startCameraAndScan(){
       try {
         statusEl.textContent = 'Requesting camera...';
@@ -290,7 +268,7 @@
       } catch (err) {
         console.error('camera', err);
         statusEl.textContent = 'Camera error: ' + (err.message || err);
-        showMessageCard('❌ Camera Error','','',{ allowActions:false, hint: 'Allow camera or try another browser.'});
+        showMessageCard('❌ Camera Error','','',{ allowActions:false, hint:'Allow camera or try another browser.'});
         scanAgainBtn.style.display = 'block';
       }
     }
@@ -304,7 +282,6 @@
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       scanning = true;
-
       function frame(){
         if (!scanning) return;
         if (awaitingConfirmation) return requestAnimationFrame(frame);
@@ -326,9 +303,9 @@
             statusEl.textContent = 'QR detected — looking up...';
             stopScannerAndStream();
             performLookup(raw).catch(err => {
-              showMessageCard('❌ Lookup Error', raw, '', { allowActions:false, hint: String(err) });
-              scanAgainBtn.style.display = 'block';
-              awaitingConfirmation = false;
+              showMessageCard('❌ Lookup Error', raw, '', { allowActions:false, hint:String(err) });
+              scanAgainBtn.style.display='block';
+              awaitingConfirmation=false;
             });
             return;
           }
@@ -341,15 +318,14 @@
     function beepShort(){
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'sine'; o.frequency.value = 880; g.gain.value = 0.08;
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type='sine'; o.frequency.value=880; g.gain.value=0.08;
         o.connect(g); g.connect(ctx.destination); o.start();
         setTimeout(()=>{ o.stop(); ctx.close(); }, 120);
       } catch(e){}
     }
 
-    // ----------------- UI card -----------------
+    /* ---------- UI CARD ---------- */
     function showMessageCard(title, ticketId, name, opts = {}){
       const { allowActions=true, isChecked=false, wasAlreadyChecked=false, checkinValue='', hint='' } = opts;
       resultCard.style.display = 'block';
@@ -363,27 +339,20 @@
     }
     function hideCard(){ resultCard.style.display = 'none'; cardActions.style.display='none'; awaitingConfirmation=false; }
 
-    // ----------------- network (lookup / checkin / stats) -----------------
+    /* ---------- NETWORK: lookup, checkin, stats ---------- */
     async function performLookup(rawScanned){
       const raw = String(rawScanned || "");
       const ticketId = raw.replace(/\r?\n|\r/g, "").trim().toLowerCase();
-      if (!ticketId) {
-        showMessageCard('❌ Invalid QR','','',{ allowActions:false, hint:'Empty QR' });
-        scanAgainBtn.style.display='block'; awaitingConfirmation=false; return;
-      }
+      if (!ticketId) { showMessageCard('❌ Invalid QR','','',{allowActions:false, hint:'Empty QR'}); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
       const url = `${WEB_APP_URL}?action=lookup&ticketId=${encodeURIComponent(ticketId)}`;
       let resp;
       try { resp = await fetch(url, { cache: "no-store" }); } catch (err) {
-        showMessageCard('❌ Network Error', ticketId, '', { allowActions:false, hint:'Network issue' });
-        scanAgainBtn.style.display='block'; awaitingConfirmation=false; return;
+        showMessageCard('❌ Network Error', ticketId, '', { allowActions:false, hint:'Network issue' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return;
       }
-      if (!resp.ok) {
-        showMessageCard('❌ Server Error', ticketId, '', { allowActions:false, hint:`Server ${resp.status}` });
-        scanAgainBtn.style.display='block'; awaitingConfirmation=false; return;
-      }
+      if (!resp.ok) { showMessageCard('❌ Server Error', ticketId, '', { allowActions:false, hint:`Server ${resp.status}` }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
       let data;
       try { data = await resp.json(); } catch { showMessageCard('❌ Invalid Response', ticketId, '', { allowActions:false, hint:'Bad JSON' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
-      if (!data.success) { showMessageCard('❌ Error', ticketId, '', { allowActions:false, hint: data.error || 'Unknown' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
+      if (!data.success) { showMessageCard('❌ Error', ticketId, '', { allowActions:false, hint:data.error||'Unknown' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
       if (!data.found) { showMessageCard('❌ Ticket Not Found', ticketId, '', { allowActions:false, hint:'Missing' }); scanAgainBtn.style.display='block'; awaitingConfirmation=false; return; }
 
       const attendeeName = data.name || '(no name)';
@@ -398,22 +367,22 @@
       showMessageCard('🔎 Verify Attendee', ticketId, attendeeName, { allowActions:true, hint:'If OK, press Confirm' });
 
       confirmBtn.onclick = async () => {
-        confirmBtn.disabled = true; confirmBtn.textContent = 'Checking in...';
+        confirmBtn.disabled = true; confirmBtn.textContent = 'Checking...';
         try {
           const result = await performCheckin(ticketId);
           showMessageCard('✅ Checked In', ticketId, result.name || attendeeName, { allowActions:false, isChecked:true, checkinValue: result.checkinValue || '', hint:'Success' });
           resultCard.classList.add('pulse');
           try { navigator.vibrate && navigator.vibrate([60,40,60]); } catch {}
-          await refreshStats(); // update counts & list
+          await refreshStats(); // refresh counts and list
         } catch (err) {
-          showMessageCard('❌ Check-in Failed', ticketId, attendeeName, { allowActions:false, hint: String(err) });
+          showMessageCard('❌ Check-in Failed', ticketId, attendeeName, { allowActions:false, hint:String(err) });
         } finally {
-          confirmBtn.disabled = false; confirmBtn.textContent = '✅ Confirm Check-In';
+          confirmBtn.disabled = false; confirmBtn.textContent = '✅ Confirm';
           scanAgainBtn.style.display='block'; awaitingConfirmation=false;
         }
       };
 
-      holdBtn.onclick = () => { hideCard(); scanAgainBtn.style.display='block'; statusEl.textContent = "Paused. Press Scan Next Ticket"; awaitingConfirmation=false; };
+      holdBtn.onclick = () => { hideCard(); scanAgainBtn.style.display='block'; statusEl.textContent='Paused. Press Scan Next Ticket'; awaitingConfirmation=false; };
       closeBtn.onclick = () => { hideCard(); awaitingConfirmation=false; };
     }
 
@@ -426,7 +395,7 @@
       return data;
     }
 
-    // ----------------- manual lookup -----------------
+    /* ---------- manual lookup ---------- */
     manualLookup.addEventListener('click', async ()=>{
       const v = (manualInput.value || '').trim();
       if (!v) return alert('Type a ticket id');
@@ -443,11 +412,11 @@
       await startCameraAndScan();
     });
 
-    // ----------------- stats & guest list -----------------
+    /* ---------- STATS + GUEST LIST ---------- */
     async function refreshStats(){
       statTotal.textContent = '—'; statChecked.textContent = '—'; statRemaining.textContent = '—';
       guestList.innerHTML = '<div class="muted">Loading...</div>';
-      mobileGuestList && (mobileGuestList.innerHTML = '<div class="muted">Loading...</div>');
+      sidebarSpinner.style.display = 'inline-block';
       try {
         const resp = await fetch(`${WEB_APP_URL}?action=stats`, { cache: "no-store" });
         if (!resp.ok) throw new Error('Server ' + resp.status);
@@ -457,20 +426,16 @@
         statChecked.textContent = data.checked ?? 0;
         statRemaining.textContent = ((data.total || 0) - (data.checked || 0));
         lastLoadedRows = (data.rows || []).map(r => ({ ...r, checked: !!r.checked }));
-        // update button labels with counts
+        // update buttons with counts
         btnAll.textContent = `All (${lastLoadedRows.length})`;
         btnChecked.textContent = `Checked (${lastLoadedRows.filter(r=>r.checked).length})`;
         btnNot.textContent = `Not checked (${lastLoadedRows.filter(r=>!r.checked).length})`;
-        mobileBtnAll.textContent = `All (${lastLoadedRows.length})`;
-        mobileBtnChecked.textContent = `Checked (${lastLoadedRows.filter(r=>r.checked).length})`;
-        mobileBtnNot.textContent = `Not checked (${lastLoadedRows.filter(r=>!r.checked).length})`;
-
         renderGuestList(lastLoadedRows);
-        renderMobileGuestList(lastLoadedRows);
       } catch (err) {
         guestList.innerHTML = `<div class="muted">Unable to load: ${err.message||err}</div>`;
-        mobileGuestList && (mobileGuestList.innerHTML = `<div class="muted">Unable to load: ${err.message||err}</div>`);
         log('stats error', err);
+      } finally {
+        sidebarSpinner.style.display = 'none';
       }
     }
 
@@ -496,103 +461,68 @@
         const meta = document.createElement('div'); meta.className = 'meta';
         meta.textContent = `${r.ticket || ''} • ${ r.checked ? (r.checkedAt || 'checked') : 'not checked' }`;
         left.appendChild(name); left.appendChild(meta);
+
         const right = document.createElement('div');
         const call = document.createElement('button'); call.className = 'btn ghost small';
         call.textContent = 'Call';
         if (!r.phone) { call.classList.add('disabled'); call.title = 'No phone collected'; } else call.onclick = ()=> window.location.href = `tel:${r.phone}`;
         right.appendChild(call);
+
         div.appendChild(left); div.appendChild(right);
         guestList.appendChild(div);
       });
     }
 
-    function renderMobileGuestList(rows){
-      if (!mobileGuestList) return;
-      const filter = (mobileFilter.value || '').trim();
-      const show = filterRows(rows, listMode, filter);
-      if (!show.length) { mobileGuestList.innerHTML = '<div class="muted">No guests</div>'; return; }
-      mobileGuestList.innerHTML = '';
-      show.forEach(r=>{
-        const div = document.createElement('div'); div.className = 'guest';
-        const left = document.createElement('div'); left.className = 'left';
-        const name = document.createElement('div'); name.className = 'name'; name.textContent = r.name || '(no name)';
-        const meta = document.createElement('div'); meta.className = 'meta';
-        meta.textContent = `${r.ticket || ''} • ${ r.checked ? (r.checkedAt || 'checked') : 'not checked' }`;
-        left.appendChild(name); left.appendChild(meta);
-        const right = document.createElement('div');
-        const call = document.createElement('button'); call.className = 'btn ghost small';
-        call.textContent = 'Call';
-        if (!r.phone) { call.classList.add('disabled'); call.title = 'No phone collected'; } else call.onclick = ()=> window.location.href = `tel:${r.phone}`;
-        right.appendChild(call);
-        div.appendChild(left); div.appendChild(right);
-        mobileGuestList.appendChild(div);
-      });
-    }
-
     // list buttons + filter events
     function setActiveListButtons(){
-      [btnAll, btnChecked, btnNot].forEach(b => b.classList.remove('list-btn','active'));
-      btnAll.classList.add('list-btn'); btnChecked.classList.add('list-btn'); btnNot.classList.add('list-btn');
+      [btnAll, btnChecked, btnNot].forEach(b => b.classList.remove('active'));
       if (listMode === 'all') btnAll.classList.add('active');
       if (listMode === 'checked') btnChecked.classList.add('active');
       if (listMode === 'not') btnNot.classList.add('active');
-
-      // mobile
-      [mobileBtnAll, mobileBtnChecked, mobileBtnNot].forEach(b => b && b.classList.remove('active'));
-      if (mobileBtnAll) mobileBtnAll.classList.add(listMode === 'all' ? 'active' : '');
-      if (mobileBtnChecked) mobileBtnChecked.classList.add(listMode === 'checked' ? 'active' : '');
-      if (mobileBtnNot) mobileBtnNot.classList.add(listMode === 'not' ? 'active' : '');
     }
-
-    btnAll.addEventListener('click', ()=>{ listMode='all'; setActiveListButtons(); renderGuestList(lastLoadedRows); renderMobileGuestList(lastLoadedRows); });
-    btnChecked.addEventListener('click', ()=>{ listMode='checked'; setActiveListButtons(); renderGuestList(lastLoadedRows); renderMobileGuestList(lastLoadedRows); });
-    btnNot.addEventListener('click', ()=>{ listMode='not'; setActiveListButtons(); renderGuestList(lastLoadedRows); renderMobileGuestList(lastLoadedRows); });
+    btnAll.addEventListener('click', ()=>{ listMode='all'; setActiveListButtons(); renderGuestList(lastLoadedRows); });
+    btnChecked.addEventListener('click', ()=>{ listMode='checked'; setActiveListButtons(); renderGuestList(lastLoadedRows); });
+    btnNot.addEventListener('click', ()=>{ listMode='not'; setActiveListButtons(); renderGuestList(lastLoadedRows); });
     filterInput.addEventListener('input', ()=> renderGuestList(lastLoadedRows));
-    mobileFilter && mobileFilter.addEventListener('input', ()=> renderMobileGuestList(lastLoadedRows));
-    mobileBtnAll && mobileBtnAll.addEventListener('click', ()=>{ listMode='all'; setActiveListButtons(); renderMobileGuestList(lastLoadedRows); renderGuestList(lastLoadedRows); });
-    mobileBtnChecked && mobileBtnChecked.addEventListener('click', ()=>{ listMode='checked'; setActiveListButtons(); renderMobileGuestList(lastLoadedRows); renderGuestList(lastLoadedRows); });
-    mobileBtnNot && mobileBtnNot.addEventListener('click', ()=>{ listMode='not'; setActiveListButtons(); renderMobileGuestList(lastLoadedRows); renderGuestList(lastLoadedRows); });
-
-    // open sidebar / drawer -> load stats on demand
-    hamb.addEventListener('click', async ()=>{
-      // open drawer on small screens, or focus sidebar on desktop
-      if (window.innerWidth <= 1000) {
-        drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false');
-        await refreshStats();
-      } else {
-        // desktop: ensure sidebar visible; load stats
-        await refreshStats();
-        // scroll sidebar into view if needed
-        document.getElementById('sidebarPanel').scrollIntoView({ behavior:'smooth' });
-      }
-      setActiveListButtons();
-    });
-
-    openListBtn.addEventListener('click', async ()=> {
-      if (window.innerWidth <= 1000) {
-        drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false');
-      }
-      await refreshStats();
-      setActiveListButtons();
-    });
-
-    closeDrawer.addEventListener('click', ()=> { drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); });
-    window.addEventListener('click', (e)=> { if (e.target === drawer) { drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); } });
-
     refreshStatsTop.addEventListener('click', ()=> refreshStats());
 
-    // ----------------- init -----------------
+    // ---------- SIDEBAR OPEN/CLOSE (slide + fade) ----------
+    async function openSidebar(){
+      sidebarContainer.style.pointerEvents = 'auto';
+      sidebar.classList.add('open');
+      sidebarContainer.setAttribute('aria-hidden','false');
+      setActiveListButtons();
+      // load stats only when opening
+      await refreshStats();
+    }
+    function closeSidebarFn(){
+      sidebar.classList.remove('open');
+      sidebarContainer.setAttribute('aria-hidden','true');
+      // small delay to disable pointer-events after animation
+      setTimeout(()=> { sidebarContainer.style.pointerEvents = 'none'; }, 340);
+    }
+
+    hamb.addEventListener('click', openSidebar);
+    closeSidebar.addEventListener('click', closeSidebarFn);
+
+    // close when clicking outside (desktop) — detect clicks outside sidebar panel
+    document.addEventListener('click', (e) => {
+      if (!sidebar.contains(e.target) && !hamb.contains(e.target)) {
+        if (sidebar.classList.contains('open')) closeSidebarFn();
+      }
+    });
+
+    // ---------- INIT ----------
     if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia) {
       statusEl.textContent = "Camera not supported";
-      showMessageCard('❌ Unsupported', '', '', { allowActions:false, hint:"Your browser doesn't support camera." });
+      showMessageCard('❌ Unsupported','','',{ allowActions:false, hint:"Your browser doesn't support camera." });
       scanAgainBtn.style.display = 'block';
     } else {
       setTimeout(()=> startCameraAndScan(), 120);
     }
 
-    // load a first stats snapshot in background after small delay (but actual guest list loads when sidebar opens)
-    setTimeout(()=> refreshStats(), 900);
-
+    // small background stats refresh so counts appear quickly (guest list loads when sidebar opens)
+    setTimeout(()=> refreshStats(), 800);
   </script>
 </body>
 </html>
